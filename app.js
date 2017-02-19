@@ -7,6 +7,7 @@ var Twitter = require("twitter");
 var path = require("path");
 var request = require("request");
 var geocoder = require("geocoder");
+var async = require("async");
 
 const CREDENTIALS = require(path.resolve(__dirname, "./credentials.json"));
 
@@ -32,42 +33,59 @@ app.get("/hello", (req, res)=> {
 	res.send({message: "hello world!"});
 });
 
-app.post("/search_tweets", (req, res) => {
-	var searchTerm = req.body.query;
-	console.log(searchTerm);	
-	twitterClient.get('search/tweets', {q: searchTerm}, (err, tweets, response) => {
-		if(err) {
-			res.send({error: err});
-		}
+var getTweets = (band, city, callback)=> {
+	
+    var searchTerm = band + " " + city;
+    console.log(searchTerm);
+    var toReturn;
+    twitterClient.get('search/tweets', {q: searchTerm}, (err, tweets, response) => {
+	if(err) {
+	    console.log("twitter issue");
+	}
 
-		console.log(tweets);
-		res.send({results: tweets});
-	});
-});
+	callback(tweets);
+    });
+};
 
 app.post("/search_events", (req, res) => {
-
-
-	geocoder.geocode("Seattle", (err, data) => {
+    
+    var resJSON = {};
+    
+    geocoder.geocode(req.body.city, (err, data) => {
+	if(err) res.send(err);
+	
+	var requestURL = ticketUrl
+	    + "&size=15"
+	    + "&classificationId=KZFzniwnSyZfZ7v7nJ"
+	    + "&latlong=" 
+	    + data.results[0].geometry.location.lat + ","
+	    + data.results[0].geometry.location.lng;
+	
+	request(requestURL, (err, response, body) => {
 	    if(err) res.send(err);
-	    console.log(data.results[0].geometry.location);
-	    	var requestURL = ticketUrl
-		+ "&size=15"
-		+ "&classificationId=KZFzniwnSyZfZ7v7nJ"
-		+ "&latlong=" 
-		+ data.results[0].geometry.location.lat + ","
-	        + data.results[0].geometry.location.lng;
 	    
-	    request(requestURL, (err, response, body) => {
-		if(err) res.send(err);
-	
-		res.send(JSON.parse(body));
+	    var eventsJSON = JSON.parse(body)._embedded.events;
+	    async.each(eventsJSON, (event, callback) => {
+		
+		var band = event._embedded
+		    .attractions[0]
+		    .name;
+		
+		var eventName = event.name;
+		getTweets(band, req.body.city, (twts) => {
+		    resJSON[eventName] = {bandName: band, tweets: twts};
+		    callback();
+		})
+	    }, (err) => {
+		if(err) {
+		    console.log("there was an async error");
+		}
+		res.send(resJSON);
 	    });
-			
 	});
-
-	
+    });	
 });
+
 
 //connect to server
 app.listen(5000, ()=>{
