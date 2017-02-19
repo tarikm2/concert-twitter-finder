@@ -46,22 +46,26 @@ app.post("/search_tweets", (req, res) => {
 });
 
 app.post("/search_events", (req, res) => {
-	var requestURL = ticketUrl
-	+ "&size=15"
-	+ "&classificationId=KZFzniwnSyZfZ7v7nJ"
-	+ "&city=" +req.body.city;
+
 
 	geocoder.geocode("Seattle", (err, data) => {
-		if(err) res.send(err);
-		console.log(data.results[0].geometry.location);
-		
-			
-	});
-	request(requestURL, (err, response, body) => {
+	    if(err) res.send(err);
+	    console.log(data.results[0].geometry.location);
+	    	var requestURL = ticketUrl
+		+ "&size=15"
+		+ "&classificationId=KZFzniwnSyZfZ7v7nJ"
+		+ "&latlong=" 
+		+ data.results[0].geometry.location.lat + ","
+	        + data.results[0].geometry.location.lng;
+	    
+	    request(requestURL, (err, response, body) => {
 		if(err) res.send(err);
 	
 		res.send(JSON.parse(body));
+	    });
+			
 	});
+
 	
 });
 
