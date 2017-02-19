@@ -1,0 +1,19 @@
+{
+  "name": "twitter-node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.16.1",
+    "express": "^4.14.1",
+    "geocode": "0.0.3",
+    "geocoder": "^0.2.2",
+    "request": "^2.79.0",
+    "twitter": "^1.7.0"
+  }
+}
