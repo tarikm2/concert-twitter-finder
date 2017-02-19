@@ -34,7 +34,7 @@ app.get("/hello", (req, res)=> {
 });
 
 var getTweets = (band, city, callback)=> {
-	
+    var toReturn = [];
     var searchTerm = band + " " + city;
     console.log(searchTerm);
     var toReturn;
@@ -42,8 +42,24 @@ var getTweets = (band, city, callback)=> {
 	if(err) {
 	    console.log("twitter issue");
 	}
+	
+	//clean up and condition the tweets to look nice kid
+	tweets = tweets.statuses;
 
-	callback(tweets);
+	tweets.forEach((tweet) => {
+	    var tObj = {};
+	    tObj.created_at = tweet.created_at;
+	    tObj.text = tweet.text;
+	    tObj.hashtags = tweet.hashtag;
+	    tObj.user_mentions = tweet.user_mentions;
+	    tObj.user_name = tweet.user.name;
+	    tObj.screen_name = tweet.user.screen_name;
+	    tObj.location = tweet.user.location;
+	    tObj.description = tweet.user.description;
+	    tObj.imgUrl = tweet.user.profile_image_url;
+	    toReturn.push(tObj);
+	});
+	callback(toReturn);
     });
 };
 
@@ -88,6 +104,6 @@ app.post("/search_events", (req, res) => {
 
 
 //connect to server
-app.listen(5000, ()=>{
+app.listen(5000, '0.0.0.0', ()=>{
 	console.log("app is running at localhost:5000");
 });
